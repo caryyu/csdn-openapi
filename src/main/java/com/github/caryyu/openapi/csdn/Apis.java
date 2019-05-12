@@ -5,6 +5,7 @@ import com.github.caryyu.openapi.csdn.model.ClearMessageResult;
 import com.github.caryyu.openapi.csdn.model.CommentResult;
 import com.github.caryyu.openapi.csdn.model.MessageResult;
 import org.apache.http.Header;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -13,18 +14,20 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.Charset;
+import java.util.*;
 
 public class Apis {
   private final String API_URL_LOGIN = "https://passport.csdn.net/v1/register/pc/login/doLogin";
   private final String API_URL_MESSAGES = "https://msg.csdn.net/v1/web/message/view/message";
   private final String API_URL_COMMENTS = "https://blog.csdn.net/%s/phoenix/comment/list/%s";
   private final String API_URL_CLEAR_MSG = "https://msg.csdn.net/v1/web/message/read";
+  private final String API_URL_COMMENT_ADD =
+      "https://blog.csdn.net/%s/phoenix/comment/submit?id=%s";
+  private final String API_URL_COMMENT_DEL = "https://blog.csdn.net/%s/phoenix/comment/delete";
 
   private ObjectMapper objectMapper;
   private CloseableHttpClient httpclient;
@@ -129,10 +132,12 @@ public class Apis {
       Map<String, Object> body = new HashMap<String, Object>();
       body.put("id", id);
       body.put("type", 0);
-      request.setEntity(new StringEntity(objectMapper.writeValueAsString(body), ContentType.APPLICATION_JSON));
+      request.setEntity(
+          new StringEntity(objectMapper.writeValueAsString(body), ContentType.APPLICATION_JSON));
       CloseableHttpResponse response = httpclient.execute(request);
       if (response.getStatusLine().getStatusCode() == 200) {
-        result = objectMapper.readValue(response.getEntity().getContent(), ClearMessageResult.class);
+        result =
+            objectMapper.readValue(response.getEntity().getContent(), ClearMessageResult.class);
       }
       response.close();
     } catch (Exception e) {
@@ -140,6 +145,87 @@ public class Apis {
     } finally {
       return result;
     }
+  }
+
+  /**
+   * 发表评论
+   *
+   * @param id 文章编号
+   * @param content 内容
+   * @return
+   */
+  public int comment(String id, String content) {
+    List<Header> cookies = checkCookies();
+    try {
+      HttpPost request = new HttpPost(String.format(API_URL_COMMENT_ADD, getUsername(), id));
+      request.setHeaders(cookies.toArray(new Header[0]));
+      request.setEntity(
+          new UrlEncodedFormEntity(
+              Arrays.asList(new BasicNameValuePair("content", content)), Charset.defaultCharset()));
+      CloseableHttpResponse response = httpclient.execute(request);
+      if (response.getStatusLine().getStatusCode() == 200) {
+        Map result = objectMapper.readValue(response.getEntity().getContent(), Map.class);
+        return Integer.parseInt(result.get("data").toString());
+      }
+      response.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return -1;
+  }
+
+  /**
+   * 回复评论
+   *
+   * @param id 文章编号
+   * @param replyId 评论编号
+   * @param content 内容
+   * @return
+   */
+  public int reply(String id, String replyId, String content) {
+    List<Header> cookies = checkCookies();
+    try {
+      HttpPost request = new HttpPost(String.format(API_URL_COMMENT_ADD, getUsername(), id));
+      request.setHeaders(cookies.toArray(new Header[0]));
+      request.setEntity(
+          new UrlEncodedFormEntity(
+              Arrays.asList(
+                  new BasicNameValuePair("replyId", replyId),
+                  new BasicNameValuePair("content", content)),
+              Charset.defaultCharset()));
+      CloseableHttpResponse response = httpclient.execute(request);
+      if (response.getStatusLine().getStatusCode() == 200) {
+        Map result = objectMapper.readValue(response.getEntity().getContent(), Map.class);
+        return Integer.parseInt(result.get("data").toString());
+      }
+      response.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return -1;
+  }
+
+  public boolean delComment(String id, String commentId) {
+    List<Header> cookies = checkCookies();
+    try {
+      HttpPost request = new HttpPost(String.format(API_URL_COMMENT_DEL, getUsername()));
+      request.setHeaders(cookies.toArray(new Header[0]));
+      request.setEntity(
+          new UrlEncodedFormEntity(
+              Arrays.asList(
+                  new BasicNameValuePair("filename", id),
+                  new BasicNameValuePair("commentId", commentId)),
+              Charset.defaultCharset()));
+      CloseableHttpResponse response = httpclient.execute(request);
+      if (response.getStatusLine().getStatusCode() == 200) {
+        Map result = objectMapper.readValue(response.getEntity().getContent(), Map.class);
+        return Integer.parseInt(result.get("result").toString()) == 1;
+      }
+      response.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return false;
   }
 
   private List<Header> checkCookies() {
