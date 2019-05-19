@@ -1,15 +1,11 @@
 package com.github.caryyu.openapi.csdn.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
-import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
   private int id;
-  @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Shanghai")
-  private Date time;
+  private String time;
   private MessageContent content;
   private String username;
   private int status;
@@ -22,11 +18,11 @@ public class Message {
     this.id = id;
   }
 
-  public Date getTime() {
+  public String getTime() {
     return time;
   }
 
-  public void setTime(Date time) {
+  public void setTime(String time) {
     this.time = time;
   }
 
