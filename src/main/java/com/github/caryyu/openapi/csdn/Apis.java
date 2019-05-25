@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.caryyu.openapi.csdn.model.ClearMessageResult;
 import com.github.caryyu.openapi.csdn.model.CommentResult;
 import com.github.caryyu.openapi.csdn.model.MessageResult;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -15,12 +17,15 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.*;
 
 public class Apis {
+  private static Log log = LogFactory.getLog(Apis.class);
+
   private final String API_URL_LOGIN = "https://passport.csdn.net/v1/register/pc/login/doLogin";
   private final String API_URL_MESSAGES = "https://msg.csdn.net/v1/web/message/view/message";
   private final String API_URL_COMMENTS = "https://blog.csdn.net/%s/phoenix/comment/list/%s";
@@ -88,7 +93,9 @@ public class Apis {
       CloseableHttpResponse response = httpclient.execute(httpPost);
 
       if (response.getStatusLine().getStatusCode() == 200) {
-        result = objectMapper.readValue(response.getEntity().getContent(), MessageResult.class);
+        String content = EntityUtils.toString(response.getEntity());
+        log.debug(content);
+        result = objectMapper.readValue(content, MessageResult.class);
       }
 
       response.close();
@@ -113,7 +120,9 @@ public class Apis {
       httpGet.setHeaders(cookies.toArray(new Header[0]));
       CloseableHttpResponse response = httpclient.execute(httpGet);
       if (response.getStatusLine().getStatusCode() == 200) {
-        result = objectMapper.readValue(response.getEntity().getContent(), CommentResult.class);
+        String content = EntityUtils.toString(response.getEntity());
+        log.debug(content);
+        result = objectMapper.readValue(content, CommentResult.class);
       }
       response.close();
     } catch (Exception e) {
@@ -136,8 +145,9 @@ public class Apis {
           new StringEntity(objectMapper.writeValueAsString(body), ContentType.APPLICATION_JSON));
       CloseableHttpResponse response = httpclient.execute(request);
       if (response.getStatusLine().getStatusCode() == 200) {
-        result =
-            objectMapper.readValue(response.getEntity().getContent(), ClearMessageResult.class);
+        String content = EntityUtils.toString(response.getEntity());
+        log.debug(content);
+        result = objectMapper.readValue(content, ClearMessageResult.class);
       }
       response.close();
     } catch (Exception e) {
@@ -164,7 +174,9 @@ public class Apis {
               Arrays.asList(new BasicNameValuePair("content", content)), Charset.defaultCharset()));
       CloseableHttpResponse response = httpclient.execute(request);
       if (response.getStatusLine().getStatusCode() == 200) {
-        Map result = objectMapper.readValue(response.getEntity().getContent(), Map.class);
+        String body = EntityUtils.toString(response.getEntity());
+        log.debug(body);
+        Map result = objectMapper.readValue(body, Map.class);
         return Integer.parseInt(result.get("data").toString());
       }
       response.close();
@@ -195,7 +207,9 @@ public class Apis {
               Charset.defaultCharset()));
       CloseableHttpResponse response = httpclient.execute(request);
       if (response.getStatusLine().getStatusCode() == 200) {
-        Map result = objectMapper.readValue(response.getEntity().getContent(), Map.class);
+        String body = EntityUtils.toString(response.getEntity());
+        log.debug(body);
+        Map result = objectMapper.readValue(body, Map.class);
         return Integer.parseInt(result.get("data").toString());
       }
       response.close();
@@ -218,7 +232,9 @@ public class Apis {
               Charset.defaultCharset()));
       CloseableHttpResponse response = httpclient.execute(request);
       if (response.getStatusLine().getStatusCode() == 200) {
-        Map result = objectMapper.readValue(response.getEntity().getContent(), Map.class);
+        String body = EntityUtils.toString(response.getEntity());
+        log.debug(body);
+        Map result = objectMapper.readValue(body, Map.class);
         return Integer.parseInt(result.get("result").toString()) == 1;
       }
       response.close();
