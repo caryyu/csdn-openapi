@@ -15,7 +15,8 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
@@ -40,7 +41,10 @@ public class Apis {
 
   public Apis() {
     objectMapper = new ObjectMapper();
-    httpclient = HttpClients.createDefault();
+    httpclient = HttpClientBuilder.create()
+        .setRetryHandler(new DefaultHttpRequestRetryHandler(
+            5, true))
+        .build();
     cookies = new ArrayList<Header>();
 
     getUsername();
@@ -160,7 +164,7 @@ public class Apis {
   /**
    * 发表评论
    *
-   * @param id 文章编号
+   * @param id      文章编号
    * @param content 内容
    * @return
    */
@@ -189,7 +193,7 @@ public class Apis {
   /**
    * 回复评论
    *
-   * @param id 文章编号
+   * @param id      文章编号
    * @param replyId 评论编号
    * @param content 内容
    * @return
